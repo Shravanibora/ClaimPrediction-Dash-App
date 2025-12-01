@@ -47,11 +47,18 @@ encounters["PATIENT"] = encounters["PATIENT"].astype(str)
 patients["Id"] = patients["Id"].astype(str)
 
 # Make TODATE a timezone-naive datetime once
-claims_transactions["TODATE"] = pd.to_datetime(
-    claims_transactions["TODATE"], errors="coerce"
-)
-if pd.api.types.is_datetime64tz_dtype(claims_transactions["TODATE"].dtype):
-    claims_transactions["TODATE"] = claims_transactions["TODATE"].dt.tz_convert(None)
+if "TODATE" in claims_transactions.columns:
+    claims_transactions["TODATE"] = pd.to_datetime(
+        claims_transactions["TODATE"], errors="coerce"
+    )
+    if pd.api.types.is_datetime64tz_dtype(
+        claims_transactions["TODATE"].dtype
+    ):
+        claims_transactions["TODATE"] = (
+            claims_transactions["TODATE"].dt.tz_convert(None)
+        )
+else:
+    claims_transactions["TODATE"] = pd.NaT
 
 USER_CREDENTIALS = {"MRPRCM1": "Password@123"}
 
