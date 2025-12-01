@@ -21,42 +21,38 @@ from sklearn.metrics import roc_auc_score
 import pandas as pd
 import numpy as np
 
-# Direct-download URLs for filtered CSVs on Google Drive
+# Google Drive URLs
 claims_url = "https://drive.google.com/uc?export=download&id=1SgsAesNi3SHouEtESiNnhY0KdFkvXsr9"
 claims_transactions_url = "https://drive.google.com/uc?export=download&id=1CXiodxDFeTDxGc0iyIovXY2BDekHtKtd"
 conditions_url = "https://drive.google.com/uc?export=download&id=1-umFfKApO8tDJw3U9-y0CslrxnIVNWLI"
 encounters_url = "https://drive.google.com/uc?export=download&id=1LZCyHiy8Q2v4Mq-4xuZY-bOax-pX2OsM"
 patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNyQpZ1cMuQR_BfiVh6"
 payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
-payers_url = "https://drive.google.com/uc?export=download&id=1aRXSPk145VaaPvnYGHCwpfJ31R7j8p7O"
-procedures_url = "https://drive.google.com/uc?export=download&id=1UgLGGvWbj7fSGuX96nZqNw9ZHG1c4VlX"
-providers_url = "https://drive.google.com/uc?export=download&id=1HnCF7JFSQvv497eZt1WpOy-hvdpVkcBt"
 
-# Load all main tables from Drive
+# Load
 patients = pd.read_csv(patients_url)
 encounters = pd.read_csv(encounters_url)
 claims = pd.read_csv(claims_url)
 claims_transactions = pd.read_csv(claims_transactions_url)
 payer_transitions = pd.read_csv(payer_transitions_url)
 
+# Standardize column names
+for df in [claims, patients, encounters, payer_transitions, claims_transactions]:
+    df.columns = df.columns.str.strip().str.upper()
 
-# Type fixes
+# Type fixes (now using upper-case names)
 claims["PATIENTID"] = claims["PATIENTID"].astype(str)
 payer_transitions["PATIENT"] = payer_transitions["PATIENT"].astype(str)
 encounters["PATIENT"] = encounters["PATIENT"].astype(str)
-patients["Id"] = patients["Id"].astype(str)
+patients["ID"] = patients["ID"].astype(str)
 
-# Make TODATE a timezone-naive datetime once
+# TODATE handling
 if "TODATE" in claims_transactions.columns:
     claims_transactions["TODATE"] = pd.to_datetime(
         claims_transactions["TODATE"], errors="coerce"
     )
-    if pd.api.types.is_datetime64tz_dtype(
-        claims_transactions["TODATE"].dtype
-    ):
-        claims_transactions["TODATE"] = (
-            claims_transactions["TODATE"].dt.tz_convert(None)
-        )
+    if pd.api.types.is_datetime64tz_dtype(claims_transactions["TODATE"].dtype):
+        claims_transactions["TODATE"] = claims_transactions["TODATE"].dt.tz_convert(None)
 else:
     claims_transactions["TODATE"] = pd.NaT
 
@@ -1388,3 +1384,4 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
