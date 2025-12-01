@@ -9,7 +9,7 @@ import plotly.express as px
 from dash import dash_table
 
 from sklearn.model_selection import train_test_split
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer 	
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -18,19 +18,33 @@ from sklearn.metrics import roc_auc_score
 # =========================================================
 # 1. DATA LOADING
 # =========================================================
-DATA_PATH = r"G:/My Drive/Master's Project/California/Filtered_Tables/"
+import pandas as pd
+import numpy as np
 
-patients = pd.read_csv(DATA_PATH + "patients_filtered.csv")
-encounters = pd.read_csv(DATA_PATH + "encounters_filtered.csv")
-claims = pd.read_csv(DATA_PATH + "claims_filtered.csv")
-claims_transactions = pd.read_csv(DATA_PATH + "claims_transactions_filtered.csv")
-payer_transitions = pd.read_csv(DATA_PATH + "payer_transitions_filtered.csv")
+# Direct-download URLs for filtered CSVs on Google Drive
+claims_url = "https://drive.google.com/uc?export=download&id=1SgsAesNi3SHouEtESiNnhY0KdFkvXsr9"
+claims_transactions_url = "https://drive.google.com/uc?export=download&id=1CXiodxDFeTDxGc0iyIovXY2BDekHtKtd"
+conditions_url = "https://drive.google.com/uc?export=download&id=1-umFfKApO8tDJw3U9-y0CslrxnIVNWLI"
+encounters_url = "https://drive.google.com/uc?export=download&id=1LZCyHiy8Q2v4Mq-4xuZY-bOax-pX2OsM"
+patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNyQpZ1cMuQR_BfiVh6"
+payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
+payers_url = "https://drive.google.com/uc?export=download&id=1aRXSPk145VaaPvnYGHCwpfJ31R7j8p7O"
+procedures_url = "https://drive.google.com/uc?export=download&id=1UgLGGvWbj7fSGuX96nZqNw9ZHG1c4VlX"
+providers_url = "https://drive.google.com/uc?export=download&id=1HnCF7JFSQvv497eZt1WpOy-hvdpVkcBt"
 
+# Load all main tables from Drive
+patients = pd.read_csv(patients_url)
+encounters = pd.read_csv(encounters_url)
+claims = pd.read_csv(claims_url)
+claims_transactions = pd.read_csv(claims_transactions_url)
+payer_transitions = pd.read_csv(payer_transitions_url)
+
+
+# Type fixes
 claims["PATIENTID"] = claims["PATIENTID"].astype(str)
 payer_transitions["PATIENT"] = payer_transitions["PATIENT"].astype(str)
 encounters["PATIENT"] = encounters["PATIENT"].astype(str)
 patients["Id"] = patients["Id"].astype(str)
-
 
 # Make TODATE a timezone-naive datetime once
 claims_transactions["TODATE"] = pd.to_datetime(
@@ -39,8 +53,9 @@ claims_transactions["TODATE"] = pd.to_datetime(
 if pd.api.types.is_datetime64tz_dtype(claims_transactions["TODATE"].dtype):
     claims_transactions["TODATE"] = claims_transactions["TODATE"].dt.tz_convert(None)
 
-
 USER_CREDENTIALS = {"MRPRCM1": "Password@123"}
+
+
 
 # =========================================================
 # 2. MODEL TRAINING USING encounters_filtered
