@@ -195,9 +195,10 @@ tab_selected_style = {
     "boxShadow": "0 4px 18px 0 rgba(27,92,245,0.12)",
 }
 
-health_issues = encounters["REASONDESCRIPTION"].dropna().unique()
-health_issues.sort()
+health_issues = encounters["REASONDESCRIPTION"].dropna().astype(str).unique()
+health_issues = sorted(health_issues)  # Python sort returning a list
 health_dropdown_options = [{"label": issue, "value": issue} for issue in health_issues]
+
 
 # =========================================================
 # 5. LOGIN LAYOUT
@@ -1398,6 +1399,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
