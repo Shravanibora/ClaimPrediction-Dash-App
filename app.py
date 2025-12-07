@@ -69,11 +69,11 @@ claims_transactions = pd.read_csv(
     claims_transactions_url,
     skipinitialspace=True,
 )
-claims_transactions.columns = claims_transactions.columns.str.strip()
 print("claims_transactions shape:", claims_transactions.shape)
 print("claims_transactions columns:", list(claims_transactions.columns))
 print(claims_transactions.head())
 
+claims_transactions.columns = claims_transactions.columns.str.strip()
 
 # Try to locate the TODATE-like column
 candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"]
@@ -1416,6 +1416,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
