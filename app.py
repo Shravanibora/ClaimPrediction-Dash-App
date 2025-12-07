@@ -49,8 +49,8 @@ patients = reduce_memory(patients)
 # Encounters
 encounters = pd.read_csv(
     encounters_url,
-    usecols=["PATIENT", "denial_reason", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"],
-    dtype={"PATIENT": "string", "denial_reason": "string", "ENCOUNTERCLASS": "string",
+    usecols=["PATIENT", "DENIAL_REASON", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"],
+    dtype={"PATIENT": "string", "DENIAL_REASON": "string", "ENCOUNTERCLASS": "string",
            "REASONDESCRIPTION": "string", "PAYER": "string", "TOTAL_CLAIM_COST": "float32"}
 )
 encounters = reduce_memory(encounters)
@@ -1397,6 +1397,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
