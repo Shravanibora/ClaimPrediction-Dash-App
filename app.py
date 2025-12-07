@@ -27,14 +27,14 @@ claims_transactions_url = "https://drive.google.com/uc?export=download&id=1CXiod
 encounters_url = "https://drive.google.com/uc?export=download&id=1LZCyHiy8Q2v4Mq-4xuZY-bOax-pX2OsM"
 patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNyQpZ1cMuQR_BfiVh6"
 payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
-payers_url = "https://drive.google.com/uc?export=download&id=1aRXSPk145VaaPvnYGHCwpfJ31R7j8p7O"
 
 # Load all main tables from Drive
-patients = pd.read_csv(patients_url)
-encounters = pd.read_csv(encounters_url)
-claims = pd.read_csv(claims_url)
-claims_transactions = pd.read_csv(claims_transactions_url)
-payer_transitions = pd.read_csv(payer_transitions_url)
+patients = pd.read_csv(patients_url, usecols=["Id", "BIRTHDATE", "GENDER"])
+encounters = pd.read_csv(encounters_url, usecols=["PATIENT", "DENIAL_REASON", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"])
+claims = pd.read_csv(claims_url, usecols=["PATIENTID", "STATUS1", "APPOINTMENTID", "STATUS2", "STATUSP"])
+claims_transactions = pd.read_csv(claims_transactions_url, usecols=["CLAIMID", "TODATE", "AMOUNT"])
+payer_transitions = pd.read_csv(payer_transitions_url, usecols=["PATIENT", "PAYER"])
+
 
 
 # Type fixes
@@ -62,22 +62,9 @@ USER_CREDENTIALS = {"MRPRCM1": "Password@123"}
 # 2. MODEL TRAINING USING encounters_filtered
 # =========================================================
 df = encounters.copy()
+df["DENIED"] = np.where(df["DENIAL_REASON"].notna() & (df["DENIAL_REASON"].str.lower() != "approved"), 1, 0)
 
-# Target: 1 = denied, 0 = not denied (DENIAL_REASON is not null and not 'approved')
-df["DENIED"] = np.where(
-    df["DENIAL_REASON"].notna() & (df["DENIAL_REASON"].str.lower() != "approved"),
-    1,
-    0,
-)
-
-# Join patients to approximate AGE from BIRTHDATE
-df = df.merge(
-    patients[["Id", "BIRTHDATE"]],
-    left_on="PATIENT",
-    right_on="Id",
-    how="left",
-)
-
+df = df.merge(patients[["Id", "BIRTHDATE"]], left_on="PATIENT", right_on="Id", how="left")
 if "BIRTHDATE" in df.columns:
     df["BIRTHDATE"] = pd.to_datetime(df["BIRTHDATE"], errors="coerce")
     ref_date = pd.to_datetime("today")
@@ -85,52 +72,37 @@ if "BIRTHDATE" in df.columns:
 else:
     df["AGE"] = np.nan
 
-# Features aligned with Predict tab
-# PAYER, ENCOUNTERCLASS, REASONDESCRIPTION, TOTAL_CLAIM_COST, AGE
 features = ["PAYER", "ENCOUNTERCLASS", "REASONDESCRIPTION", "TOTAL_CLAIM_COST", "AGE"]
 df_model = df[features + ["DENIED"]].copy()
 
 for col in ["PAYER", "ENCOUNTERCLASS", "REASONDESCRIPTION"]:
     df_model[col] = df_model[col].astype(str)
-
 df_model = df_model.dropna(subset=["PAYER", "ENCOUNTERCLASS", "TOTAL_CLAIM_COST"])
 
 X = df_model[features]
 y = df_model["DENIED"]
-
 cat_features = ["PAYER", "ENCOUNTERCLASS", "REASONDESCRIPTION"]
 num_features = ["TOTAL_CLAIM_COST", "AGE"]
 
 preprocess = ColumnTransformer(
-    transformers=[
-        ("cat", OneHotEncoder(handle_unknown="ignore"), cat_features),
-        ("num", StandardScaler(), num_features),
-    ]
+    transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), cat_features),
+                  ("num", StandardScaler(), num_features)]
 )
 
 log_reg = LogisticRegression(max_iter=200, class_weight="balanced", solver="lbfgs")
-
-denial_model = Pipeline(
-    steps=[
-        ("preprocess", preprocess),
-        ("model", log_reg),
-    ]
-)
+denial_model = Pipeline([("preprocess", preprocess), ("model", log_reg)])
 
 if len(X) > 0 and y.nunique() > 1:
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
     denial_model.fit(X_train, y_train)
     try:
         y_pred_proba = denial_model.predict_proba(X_test)[:, 1]
         print("Denial model ROC AUC:", roc_auc_score(y_test, y_pred_proba))
-    except Exception as e:
-        print("Could not compute ROC AUC:", e)
+    except:
+        print("Could not compute ROC AUC")
 else:
     denial_model = None
     print("Warning: Not enough data to train denial model.")
-
 # =========================================================
 # 3. DASH APP SETUP
 # =========================================================
@@ -1382,5 +1354,6 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
