@@ -64,13 +64,29 @@ claims = pd.read_csv(
 )
 claims = reduce_memory(claims)
 
+# Claims trans
 claims_transactions = pd.read_csv(
     claims_transactions_url,
-    sep="\t",  # <- important for Synthea tab-separated files
-    skipinitialspace=True
+    sep="\t",
+    skipinitialspace=True,
 )
 claims_transactions.columns = claims_transactions.columns.str.strip()
-claims_transactions = reduce_memory(claims_transactions)
+
+# Try to locate the TODATE-like column
+candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"]
+if candidate_cols:
+    todate_col = candidate_cols[0]
+    claims_transactions[todate_col] = pd.to_datetime(
+        claims_transactions[todate_col], errors="coerce"
+    )
+    if pd.api.types.is_datetime64tz_dtype(claims_transactions[todate_col].dtype):
+        claims_transactions[todate_col] = claims_transactions[todate_col].dt.tz_convert(None)
+    # Optionally standardize the name to exactly "TODATE"
+    claims_transactions = claims_transactions.rename(columns={todate_col: "TODATE"})
+else:
+    # No TODATE-like column found; create an all-NaT column so later code still runs
+    claims_transactions["TODATE"] = pd.NaT
+
 
 
 # Payer Transitions
@@ -87,12 +103,6 @@ payer_transitions["PATIENT"] = payer_transitions["PATIENT"].astype(str)
 encounters["PATIENT"] = encounters["PATIENT"].astype(str)
 patients["Id"] = patients["Id"].astype(str)
 
-# Make TODATE a timezone-naive datetime once
-claims_transactions["TODATE"] = pd.to_datetime(
-    claims_transactions["TODATE"], errors="coerce"
-)
-if pd.api.types.is_datetime64tz_dtype(claims_transactions["TODATE"].dtype):
-    claims_transactions["TODATE"] = claims_transactions["TODATE"].dt.tz_convert(None)
 
 
 USER_CREDENTIALS = {"MRPRCM1": "Password@123"}
@@ -1396,6 +1406,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
