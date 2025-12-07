@@ -66,12 +66,14 @@ claims = reduce_memory(claims)
 
 claims_transactions = pd.read_csv(
     claims_transactions_url,
+    sep="\t",  # <- important for Synthea tab-separated files
     usecols=["CLAIMID", "AMOUNT", "TODATE"],
     dtype={"CLAIMID": "string", "AMOUNT": "float32", "TODATE": "string"},
     skipinitialspace=True
 )
 claims_transactions.columns = claims_transactions.columns.str.strip()
 claims_transactions = reduce_memory(claims_transactions)
+
 
 # Payer Transitions
 payer_transitions = pd.read_csv(
@@ -1398,6 +1400,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
