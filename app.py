@@ -29,11 +29,34 @@ patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNy
 payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
 
 # Load all main tables from Drive
-patients = pd.read_csv(patients_url, usecols=["Id", "BIRTHDATE", "GENDER"])
-encounters = pd.read_csv(encounters_url, usecols=["PATIENT", "DENIAL_REASON", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"])
-claims = pd.read_csv(claims_url, usecols=["PATIENTID", "STATUS1", "APPOINTMENTID", "STATUS2", "STATUSP"])
-claims_transactions = pd.read_csv(claims_transactions_url, usecols=["CLAIMID", "TODATE", "AMOUNT"])
-payer_transitions = pd.read_csv(payer_transitions_url, usecols=["PATIENT", "PAYER"])
+patients = pd.read_csv(
+    patients_url,
+    usecols=["Id", "BIRTHDATE", "GENDER"]
+)
+
+# Encounters
+encounters = pd.read_csv(
+    encounters_url,
+    usecols=["PATIENT", "denial_reason", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"]
+)
+
+# Claims
+claims = pd.read_csv(
+    claims_url,
+    usecols=["PATIENTID", "STATUS1", "APPOINTMENTID", "STATUS2", "STATUSP"]
+)
+
+# Claims Transactions (corrected columns)
+claims_transactions = pd.read_csv(
+    claims_transactions_url,
+    usecols=["CLAIMID", "TODATE", "AMOUNT"]
+)
+
+# Payer Transitions
+payer_transitions = pd.read_csv(
+    payer_transitions_url,
+    usecols=["PATIENT", "PAYER"]
+)
 
 
 
@@ -1354,6 +1377,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
