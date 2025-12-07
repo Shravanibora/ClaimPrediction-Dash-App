@@ -19,8 +19,6 @@ from sklearn.metrics import roc_auc_score
 # Memory optimization helpers
 # =========================================================
 def reduce_memory(df):
-    for col in df.select_dtypes(include=['int64']).columns:
-        df[col] = pd.to_numeric(df[col], downcast='integer')
     for col in df.select_dtypes(include=['float64']).columns:
         df[col] = pd.to_numeric(df[col], downcast='float')
     for col in df.select_dtypes(include=['object']).columns:
@@ -44,7 +42,7 @@ payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuu
 patients = pd.read_csv(
     patients_url,
     usecols=["Id", "BIRTHDATE", "GENDER"],
-    dtype={"Id": "int32", "GENDER": "string"}
+    dtype={"Id": "string", "GENDER": "string"}
 )
 patients = reduce_memory(patients)
 
@@ -52,7 +50,7 @@ patients = reduce_memory(patients)
 encounters = pd.read_csv(
     encounters_url,
     usecols=["PATIENT", "denial_reason", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"],
-    dtype={"PATIENT": "int32", "denial_reason": "string", "ENCOUNTERCLASS": "string",
+    dtype={"PATIENT": "string", "denial_reason": "string", "ENCOUNTERCLASS": "string",
            "REASONDESCRIPTION": "string", "PAYER": "string", "TOTAL_CLAIM_COST": "float32"}
 )
 encounters = reduce_memory(encounters)
@@ -61,8 +59,8 @@ encounters = reduce_memory(encounters)
 claims = pd.read_csv(
     claims_url,
     usecols=["PATIENTID", "STATUS1", "APPOINTMENTID", "STATUS2", "STATUSP"],
-    dtype={"PATIENTID": "int32", "STATUS1": "string", "STATUS2": "string", "STATUSP": "string",
-           "APPOINTMENTID": "int32"}
+    dtype={"PATIENTID": "string", "STATUS1": "string", "STATUS2": "string", "STATUSP": "string",
+           "APPOINTMENTID": "string"}
 )
 claims = reduce_memory(claims)
 
@@ -70,7 +68,7 @@ claims = reduce_memory(claims)
 claims_transactions = pd.read_csv(
     claims_transactions_url,
     usecols=["CLAIMID", "TODATE", "AMOUNT"],
-    dtype={"CLAIMID": "int32", "AMOUNT": "float32", "TODATE": "string"}
+    dtype={"CLAIMID": "string", "AMOUNT": "float32", "TODATE": "string"}
 )
 claims_transactions = reduce_memory(claims_transactions)
 
@@ -78,10 +76,9 @@ claims_transactions = reduce_memory(claims_transactions)
 payer_transitions = pd.read_csv(
     payer_transitions_url,
     usecols=["PATIENT", "PAYER"],
-    dtype={"PATIENT": "int32", "PAYER": "string"}
+    dtype={"PATIENT": "string", "PAYER": "string"}
 )
 payer_transitions = reduce_memory(payer_transitions)
-
 
 # Type fixes
 claims["PATIENTID"] = claims["PATIENTID"].astype(str)
@@ -1400,6 +1397,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
