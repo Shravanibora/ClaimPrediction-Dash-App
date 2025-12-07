@@ -64,12 +64,13 @@ claims = pd.read_csv(
 )
 claims = reduce_memory(claims)
 
-# Claims Transactions
 claims_transactions = pd.read_csv(
     claims_transactions_url,
-    usecols=["CLAIMID", "TODATE", "AMOUNT"],
-    dtype={"CLAIMID": "string", "AMOUNT": "float32", "TODATE": "string"}
+    usecols=["CLAIMID", "AMOUNT", "TODATE"],
+    dtype={"CLAIMID": "string", "AMOUNT": "float32", "TODATE": "string"},
+    skipinitialspace=True
 )
+claims_transactions.columns = claims_transactions.columns.str.strip()
 claims_transactions = reduce_memory(claims_transactions)
 
 # Payer Transitions
@@ -1397,6 +1398,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
