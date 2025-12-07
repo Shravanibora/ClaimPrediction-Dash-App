@@ -1063,6 +1063,9 @@ def update_claims_trend_and_exposure(
 
     # 1. Start from transactions table (has TODATE, AMOUNT)
     df = claims_transactions.copy()
+    print("initial rows:", len(df))
+    print("non-null TODATE:", df["TODATE"].notna().sum())
+    print("TODATE min/max:", df["TODATE"].min(), df["TODATE"].max())
 
     # 2. Join to claims to bring STATUS1 and PATIENTID
     base_cols = [c for c in ["Id", "PATIENTID", "STATUS1"] if c in claims.columns]
@@ -1076,6 +1079,7 @@ def update_claims_trend_and_exposure(
             right_on="Id",
             how="left",
         )
+    print("after join:", len(df))
 
     # 3. Limit to last 10 years by TODATE
     today = datetime.today().date()
@@ -1087,10 +1091,12 @@ def update_claims_trend_and_exposure(
         (df["TODATE"] >= start_limit) &
         (df["TODATE"] <= end_limit)
     ]
+    print("after 10y filter:", len(df))
 
     # 4. Status filter (from claims.STATUS1)
     if status_selected and "STATUS1" in df.columns:
         df = df[df["STATUS1"].isin(status_selected)]
+    print("after status filter:", len(df))
 
     # 5. Payer filter (join to payer_transitions by PATIENTID)
     if payer_selected and len(payer_selected) > 0:
@@ -1106,12 +1112,14 @@ def update_claims_trend_and_exposure(
                 how="left",
             )
             df = df[df["PAYER"].isin(payer_selected)]
+    print("after payer filter:", len(df))
 
     # 6. Date picker filter (using TODATE)
     if start_date:
         df = df[df["TODATE"] >= pd.to_datetime(start_date)]
     if end_date:
         df = df[df["TODATE"] <= pd.to_datetime(end_date)]
+    print("after datepicker filter:", len(df))
 
     # 7. If nothing left
     if df.empty:
@@ -1157,8 +1165,8 @@ def update_claims_trend_and_exposure(
             zeroline=True,
             zerolinewidth=1,
             zerolinecolor="#CCCCCC",
-	    tick0=0,
-	    dtick=5000,
+            tick0=0,
+            dtick=5000,
         ),
     )
 
@@ -1167,7 +1175,6 @@ def update_claims_trend_and_exposure(
     exposure_text = f"${total_exposure:,.2f}"
 
     return fig, exposure_text
-
 
 # =========================================================
 # 9. PREDICTION CALLBACK (USES MODEL)
@@ -1406,6 +1413,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
