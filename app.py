@@ -66,7 +66,7 @@ claims = reduce_memory(claims)
 
 # Claims trans
 claims_transactions = pd.read_csv(
-    "data/claims_transactions_filtered.csv",
+    claims_transactions_url,
     sep="\t",
     skipinitialspace=True,
 )
@@ -1417,6 +1417,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
