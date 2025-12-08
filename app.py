@@ -642,8 +642,10 @@ def render_tab(tab):
                     ],
                     className="mb-4",
                 ),
+            ],
+            fluid=True,
+        )
 
-              
     elif tab == "tab-denial":
         return dbc.Container(
             [
@@ -967,6 +969,7 @@ def update_denial_graph(tab_value):
     fig.update_layout(xaxis_tickangle=-45, plot_bgcolor="#EEF3F8")
     return fig
 
+
 # =========================================================
 # 9. PREDICTION CALLBACK (USES MODEL)
 # =========================================================
@@ -1204,7 +1207,6 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
-
 
 
 
