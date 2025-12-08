@@ -80,25 +80,17 @@ claims_transactions = pd.read_csv(
     sep=",",
     skipinitialspace=True
 )
+claims_transactions["TODATE"] = pd.to_datetime(claims_transactions["TODATE"], errors="coerce")
+
 claims_transactions = reduce_memory(claims_transactions)
+
+# Force string for joins
+claims_transactions["CLAIMID"] = claims_transactions["CLAIMID"].astype(str)
+claims_transactions["PATIENTID"] = claims_transactions["PATIENTID"].astype(str)
 
 print("claims_transactions shape:", claims_transactions.shape)
 print("claims_transactions columns:", list(claims_transactions.columns))
 print(claims_transactions.head())
-
-# Try to locate the TODATE-like column
-# Convert TODATE to datetime safely
-candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_","") == "TODATE"]
-if candidate_cols:
-    todate_col = candidate_cols[0]
-    claims_transactions[todate_col] = pd.to_datetime(claims_transactions[todate_col], errors="coerce")
-    # Remove timezone if present
-    if pd.api.types.is_datetime64tz_dtype(claims_transactions[todate_col].dtype):
-        claims_transactions[todate_col] = claims_transactions[todate_col].dt.tz_convert(None)
-    claims_transactions = claims_transactions.rename(columns={todate_col:"TODATE"})
-else:
-    claims_transactions["TODATE"] = pd.NaT
-
 
 
 
@@ -1426,6 +1418,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
