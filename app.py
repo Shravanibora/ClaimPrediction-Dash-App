@@ -67,7 +67,7 @@ claims = reduce_memory(claims)
 # Claims trans
 claims_transactions = pd.read_csv(
     claims_transactions_url,
-    sep="\t",
+    sep=",",
     skipinitialspace=True,
 )
 print("claims_transactions shape:", claims_transactions.shape)
@@ -1417,6 +1417,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
