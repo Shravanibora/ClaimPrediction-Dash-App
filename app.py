@@ -33,7 +33,7 @@ import numpy as np
 
 # Direct-download URLs for filtered CSVs on Google Drive
 claims_url = "https://drive.google.com/uc?export=download&id=1SgsAesNi3SHouEtESiNnhY0KdFkvXsr9"
-claims_transactions_url = "https://drive.google.com/uc?export=download&id=1CXiodxDFeTDxGc0iyIovXY2BDekHtKtd"
+claims_transactions_cleaned_url = "https://drive.google.com/uc?export=download&id=1aEVnVnGotiVOAvKQFjFVVDoJpZnmgMt6"
 encounters_url = "https://drive.google.com/uc?export=download&id=1LZCyHiy8Q2v4Mq-4xuZY-bOax-pX2OsM"
 patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNyQpZ1cMuQR_BfiVh6"
 payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
@@ -66,29 +66,40 @@ claims = reduce_memory(claims)
 
 # Claims trans
 claims_transactions = pd.read_csv(
-    claims_transactions_url,
+    claims_transactions_cleaned_url,
+    usecols=["CLAIMID", "PATIENTID", "TODATE"],
+    dtype={
+        "CLAIMID": "string",
+        "PATIENTID": "string",
+        "TODATE": "string"
+    },
     sep=",",
-    skipinitialspace=True,
+    skipinitialspace=True
 )
+claims_transactions = reduce_memory(claims_transactions)
+
 print("claims_transactions shape:", claims_transactions.shape)
 print("claims_transactions columns:", list(claims_transactions.columns))
 print(claims_transactions.head())
 
-claims_transactions.columns = claims_transactions.columns.str.strip()
-
 # Try to locate the TODATE-like column
-candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"]
+candidate_cols = [
+    c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"
+]
+
 if candidate_cols:
     todate_col = candidate_cols[0]
+    # Convert to datetime
     claims_transactions[todate_col] = pd.to_datetime(
         claims_transactions[todate_col], errors="coerce"
     )
+    # Remove timezone if present
     if pd.api.types.is_datetime64tz_dtype(claims_transactions[todate_col].dtype):
         claims_transactions[todate_col] = claims_transactions[todate_col].dt.tz_convert(None)
-    # Optionally standardize the name to exactly "TODATE"
+    # Standardize column name to "TODATE"
     claims_transactions = claims_transactions.rename(columns={todate_col: "TODATE"})
 else:
-    # No TODATE-like column found; create an all-NaT column so later code still runs
+    # Fallback: create empty TODATE column
     claims_transactions["TODATE"] = pd.NaT
 
 
@@ -1417,6 +1428,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
