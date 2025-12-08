@@ -65,6 +65,10 @@ claims = pd.read_csv(
 claims = reduce_memory(claims)
 
 # Claims trans
+
+import warnings
+warnings.filterwarnings("ignore")  # suppress harmless warnings
+
 claims_transactions = pd.read_csv(
     claims_transactions_cleaned_url,
     usecols=["CLAIMID", "PATIENTID", "TODATE"],
@@ -1422,6 +1426,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
