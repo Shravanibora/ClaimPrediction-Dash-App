@@ -83,24 +83,18 @@ print("claims_transactions columns:", list(claims_transactions.columns))
 print(claims_transactions.head())
 
 # Try to locate the TODATE-like column
-candidate_cols = [
-    c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"
-]
-
+# Convert TODATE to datetime safely
+candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_","") == "TODATE"]
 if candidate_cols:
     todate_col = candidate_cols[0]
-    # Convert to datetime
-    claims_transactions[todate_col] = pd.to_datetime(
-        claims_transactions[todate_col], errors="coerce"
-    )
+    claims_transactions[todate_col] = pd.to_datetime(claims_transactions[todate_col], errors="coerce")
     # Remove timezone if present
     if pd.api.types.is_datetime64tz_dtype(claims_transactions[todate_col].dtype):
         claims_transactions[todate_col] = claims_transactions[todate_col].dt.tz_convert(None)
-    # Standardize column name to "TODATE"
-    claims_transactions = claims_transactions.rename(columns={todate_col: "TODATE"})
+    claims_transactions = claims_transactions.rename(columns={todate_col:"TODATE"})
 else:
-    # Fallback: create empty TODATE column
     claims_transactions["TODATE"] = pd.NaT
+
 
 
 
@@ -1428,6 +1422,7 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
