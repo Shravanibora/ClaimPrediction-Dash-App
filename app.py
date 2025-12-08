@@ -26,109 +26,91 @@ def reduce_memory(df):
     return df
 
 # =========================================================
-# 1. DATA LOADING (LOCAL FILES)
+# 1. DATA LOADING
 # =========================================================
 import pandas as pd
 import numpy as np
-import warnings
 
-warnings.filterwarnings("ignore")  # suppress harmless warnings
+# Direct-download URLs for filtered CSVs on Google Drive
+claims_url = "https://drive.google.com/uc?export=download&id=1SgsAesNi3SHouEtESiNnhY0KdFkvXsr9"
+claims_transactions_url = "https://drive.google.com/uc?export=download&id=1CXiodxDFeTDxGc0iyIovXY2BDekHtKtd"
+encounters_url = "https://drive.google.com/uc?export=download&id=1LZCyHiy8Q2v4Mq-4xuZY-bOax-pX2OsM"
+patients_url = "https://drive.google.com/uc?export=download&id=1aVTH4eFmTn8MZxNyQpZ1cMuQR_BfiVh6"
+payer_transitions_url = "https://drive.google.com/uc?export=download&id=1iatTcuuwb-8-Bbc5sclHv_voo8NJZybw"
 
-# File paths (local)
-claims_file = "claims.csv"
-claims_transactions_file = "claims_transactions_cleaned.csv"
-encounters_file = "encounters.csv"
-patients_file = "patients.csv"
-payer_transitions_file = "payer_transitions.csv"
-
-# ------------------------------
-# Memory optimization helper
-# ------------------------------
-def reduce_memory(df):
-    for col in df.select_dtypes(include=['float64']).columns:
-        df[col] = pd.to_numeric(df[col], downcast='float')
-    for col in df.select_dtypes(include=['object']).columns:
-        df[col] = df[col].astype('string')
-    return df
-
-# ------------------------------
-# Patients
-# ------------------------------
+# Load all main tables from Drive
 patients = pd.read_csv(
-    patients_file,
+    patients_url,
     usecols=["Id", "BIRTHDATE", "GENDER"],
     dtype={"Id": "string", "GENDER": "string"}
 )
 patients = reduce_memory(patients)
 
-# ------------------------------
 # Encounters
-# ------------------------------
 encounters = pd.read_csv(
-    encounters_file,
+    encounters_url,
     usecols=["PATIENT", "DENIAL_REASON", "ENCOUNTERCLASS", "REASONDESCRIPTION", "PAYER", "TOTAL_CLAIM_COST"],
     dtype={"PATIENT": "string", "DENIAL_REASON": "string", "ENCOUNTERCLASS": "string",
            "REASONDESCRIPTION": "string", "PAYER": "string", "TOTAL_CLAIM_COST": "float32"}
 )
 encounters = reduce_memory(encounters)
 
-# ------------------------------
 # Claims
-# ------------------------------
 claims = pd.read_csv(
-    claims_file,
+    claims_url,
     usecols=["PATIENTID", "STATUS1", "APPOINTMENTID", "STATUS2", "STATUSP"],
     dtype={"PATIENTID": "string", "STATUS1": "string", "STATUS2": "string", "STATUSP": "string",
            "APPOINTMENTID": "string"}
 )
 claims = reduce_memory(claims)
 
-# ------------------------------
-# Claims Transactions (Cleaned)
-# ------------------------------
+# Claims trans
 claims_transactions = pd.read_csv(
-    claims_transactions_file,
-    usecols=["CLAIMID", "PATIENTID", "TODATE"],
-    dtype=str,
-    sep=",",
-    skipinitialspace=True
+    claims_transactions_url,
+    sep="\t",
+    skipinitialspace=True,
 )
-
-# Convert TODATE to datetime safely
-claims_transactions["TODATE"] = pd.to_datetime(claims_transactions["TODATE"], errors="coerce")
-
-# Reduce memory
-claims_transactions = reduce_memory(claims_transactions)
-
-# Force string for joins
-claims_transactions["CLAIMID"] = claims_transactions["CLAIMID"].astype(str)
-claims_transactions["PATIENTID"] = claims_transactions["PATIENTID"].astype(str)
-
 print("claims_transactions shape:", claims_transactions.shape)
+print("claims_transactions columns:", list(claims_transactions.columns))
 print(claims_transactions.head())
 
-# ------------------------------
+claims_transactions.columns = claims_transactions.columns.str.strip()
+
+# Try to locate the TODATE-like column
+candidate_cols = [c for c in claims_transactions.columns if c.upper().replace("_", "") == "TODATE"]
+if candidate_cols:
+    todate_col = candidate_cols[0]
+    claims_transactions[todate_col] = pd.to_datetime(
+        claims_transactions[todate_col], errors="coerce"
+    )
+    if pd.api.types.is_datetime64tz_dtype(claims_transactions[todate_col].dtype):
+        claims_transactions[todate_col] = claims_transactions[todate_col].dt.tz_convert(None)
+    # Optionally standardize the name to exactly "TODATE"
+    claims_transactions = claims_transactions.rename(columns={todate_col: "TODATE"})
+else:
+    # No TODATE-like column found; create an all-NaT column so later code still runs
+    claims_transactions["TODATE"] = pd.NaT
+
+
+
 # Payer Transitions
-# ------------------------------
 payer_transitions = pd.read_csv(
-    payer_transitions_file,
+    payer_transitions_url,
     usecols=["PATIENT", "PAYER"],
     dtype={"PATIENT": "string", "PAYER": "string"}
 )
 payer_transitions = reduce_memory(payer_transitions)
 
-# ------------------------------
-# Ensure string types for joins
-# ------------------------------
+# Type fixes
 claims["PATIENTID"] = claims["PATIENTID"].astype(str)
 payer_transitions["PATIENT"] = payer_transitions["PATIENT"].astype(str)
 encounters["PATIENT"] = encounters["PATIENT"].astype(str)
 patients["Id"] = patients["Id"].astype(str)
 
-# ------------------------------
-# USER CREDENTIALS
-# ------------------------------
+
+
 USER_CREDENTIALS = {"MRPRCM1": "Password@123"}
+
 
 
 # =========================================================
@@ -1435,13 +1417,6 @@ def update_output(n_clicks, username, password):
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
 
 
 
